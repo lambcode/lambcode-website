@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			html, body {
+				background-color: #222222;
+
+				font-family: sans-serif;
+				font-size: 18px;
+			}
+
+			@media (min-height: 1250px) and (min-width: 900px) {
+				html {
+					font-size: 26px;
+				}
+			}
+
+			body {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			.center {
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
+			}
+
+			.center-column {
+				position: relative;
+				width: 44rem;
+			}
+
+			#light-container {
+				display: flex;
+				justify-content: center;
+			}
+
+			#light {
+				position: absolute;
+				height: 8.3rem;
+				right: 0;
+			}
+
+			#text-logo {
+				padding: 2.2rem;
+				height: 4.5rem;
+				margin: 2.8rem 0;
+			}
+
+			#sheep {
+				height: 22.2rem;
+			}
+
+			#bubble-text {
+				font-size: 1rem;
+			}
+
+			#bubble {
+				position: absolute;
+				float: right;
+				background-color: #eeeeee;
+
+				border-radius: 50%;
+				padding: 1.7rem 2.8rem;
+
+				left: 2.2rem;
+				top: -5.6rem;
+
+				width: 12.8rem;
+				height: 3.9rem;
+				vertical-align: middle;
+
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+
+
+				transform: scale(0);
+				transition: transform .4s linear;
+			}
+
+			#bubble.animate {
+				animation: .4s linear open forwards, .4s linear 6s close forwards;
+			}
+
+			#bubble:before, #bubble:after {
+				position: absolute;
+				content: "";
+				background-color: #eeeeee;
+
+				border-radius: 50%;
+			}
+
+			#bubble:before {
+				width: 1.1rem;
+				height: 1.1rem;
+				right: 4.4rem;
+				bottom: -1.7rem;
+			}
+
+			#bubble:after {
+				width: .6rem;
+				height: .6rem;
+				right: 3.3rem;
+				bottom: -2.2rem;
+			}
+
+			@keyframes open {
+				0% { transform: scale(0) }
+				100% { transform: scale(1) }
+			}
+			@keyframes close {
+				0% { transform: scale(1) }
+				100% { transform: scale(0) }
+			}
+
+			button {
+				font-size: 1rem;
+				background-color: #eeeeee;
+				border-radius: .28rem;
+				border: none;
+				margin: .6rem;
+				padding: .6rem 1.7rem;
+
+			}
+
+			button:not([disabled]) {
+				cursor: pointer;
+			}
+
+			button:hover:not([disabled]) {
+				background-color: #aaaaaa;
+			}
+
+			#buttons {
+				margin-top: 4.4rem;
+				display: flex;
+				justify-content: center;
+			}
+
+		</style>
+
+		<script>
+
+			let messages = [
+				'Hi There! <br/> I\'m just coding. Feel free to browse around though.',
+				'What\'s for dinner? Hope it\'s not lambchops!',
+				'Greetings agent 010001',
+				'Have you heard about <a href="https://kotlinlang.org/">Kotlin</a>? It\'s awesome!',
+				'I might start that blog someday...',
+				'Remember, use ":q" to exit Vim',
+				'Did someone say Tacos!?',
+				'Don\'t forget your WHERE clauses.',
+				'Please and thank you are nice. Donuts are better.',
+			];
+
+			let unreadMessages = [];
+			populateUnreadMessages();
+			setRead(0);
+			let nextMessage = 0;
+
+			function populateUnreadMessages() {
+				unreadMessages = Array.from(Array(messages.length).keys())
+			}
+
+			function setRead(messageIndex) {
+				unreadMessages = unreadMessages.filter((e) => e !== messageIndex)
+			}
+
+			function getRandomInt(min, max) {
+			  min = Math.ceil(min);
+			  max = Math.floor(max);
+			  return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+			}
+
+			function resetAnimation() {
+				let e = document.getElementById('bubble');
+				e.classList.remove('animate');
+
+				setTimeout(displayMessage, 100)
+			}
+
+			function displayMessage() {
+				let e = document.getElementById('bubble');
+				document.getElementById('bubble-text').innerHTML = messages[nextMessage];
+				nextMessage = unreadMessages[getRandomInt(0, unreadMessages.length-1)];
+				setRead(nextMessage);
+				if (unreadMessages.length === 0)
+					populateUnreadMessages();
+
+				e.classList.add('animate');
+
+				setTimeout(resetAnimation, 12000)
+			}
+
+			setTimeout(displayMessage, 4000)
+
+		</script>
+	</head>
+	<body>
+		<div id="light-container" class="center-column">
+			<img id="text-logo" src="lambcode.text.png"/>
+			<img id="light" src="light.png"/>
+		</div>
+		<div class="center-column">
+			<div id="bubble">
+				<div id="bubble-text"></div>
+			</div>
+			<img id="sheep" class="center" src="lambcode.gif"/>
+		</div>
+		<div id="buttons" class="center-column">
+			<a href="https://github.com/lambcode?tab=repositories"><button>GitHub</button></a>
+			<a href="https://git.lambcode.net/"><button>GitLab</button></a>
+			<button disabled>Blog</button>
+		</div>
+	</body>
+</html>
