@@ -9,23 +9,39 @@
 	background-color: #feffd4;
     font-family: 'Cormorant', serif;
 	height: 100%;
+	padding: 0;
+	margin: 0;
   }
 
-  img {
-	  width: 400px;
+  body {
+	box-shadow: inset 0 0 6em rgba(0, 0, 0, 0.9)
+  }
+
+  .inset-border {
+	  height: 200px;
 	    outline: 10px solid rgba(255, 255, 255, .75);
   outline-offset: -10px;
+  }
+
+  .tulip {
+	  height: 200px;
+	  margin-top: 60px;
+	  margin-left: 50px;
+	  margin-right: 50px;
   }
 
   p {
 	  font-size: x-large;
   }
 
+  .tall {
+	  height:100%;
+  }
+
   .center {
 	    display: flex;
   align-items: center;
   justify-content: center;
-	height: 100%;
   }
 
   .vert {
@@ -36,13 +52,25 @@
 	</head>
 
 	<body>
-		<div class="center">
+		<div class="center tall">
 		<div class="center vert">
+		<div class="center">
+		<picture>
+		  <source srcset="tulipyello_left.webp" type="image/webp">
+		  <source srcset="tulipyello_left.jpg" type="image/jpeg">
+		  <img class="tulip" src="tulipyello_left.jpg">
+		</picture>
 		<picture>
 		  <source srcset="nikkibrian.webp" type="image/webp">
 		  <source srcset="nikkibrian.jpg" type="image/jpeg">
-		  <img src="nikkibrian.jpg">
+		  <img class="inset-border" src="nikkibrian.jpg">
 		</picture>
+		<picture>
+		  <source srcset="tulipyello_right.webp" type="image/webp">
+		  <source srcset="tulipyello_right.jpg" type="image/jpeg">
+		  <img class="tulip" src="tulipyello_right.jpg">
+		</picture>
+		</div>
 		<h1>Nikki and Brian are registered at</h1>
 		<p><a href="https://www.amazon.com/wedding/registry/3ICN90DJ5447V">Amazon</a></p>
 		<p><a href="">Target</a></p>
