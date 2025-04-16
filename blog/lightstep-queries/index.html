@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style >
+		html, body {
+			width: 100%;
+			padding: 0;
+            margin: 0;
+            background-color: #ddd;
+			color: #111;
+            height: 100%;
+		}
+		body {
+			display: grid;
+			grid-template-columns: 2fr [content] 6fr 2fr;
+		}
+		.pane {
+			padding:  0 3rem 0 3rem ;
+			grid-column-start: content;
+            grid-column-end: content;
+            background-color: #eee;
+            height: 100%;
+		}
+		h2, h1 {
+			color: #48c;
+		}
+		img {
+			max-width: 500px;
+		}
+        img.larger {
+            max-width: 800px;
+        }
+		table {
+			width: 80%;
+		}
+		table, td {
+			border: 1px solid;
+			border-collapse: collapse;
+		}
+		td {
+			padding-left: 10px;
+            padding-right: 10px;
+		}
+
+        @media only screen and (max-device-width: 768px){
+            body {
+                display: grid;
+                grid-template-columns: [content] 1fr;
+            }
+		}
+	</style>
+</head>
+<body>
+	<div class="pane">
+		<h1>lambcode.net blog</h1>
+		<hr/>
+		<h1>How queries at Lightstep work</h1>
+		<p>At Lightstep, we treat metric queries and span queries almost exactly the same. In this post, we&rsquo;ll
+			explore how the different stages of a query interact with each other to take your raw data from our data
+			storage layer and aggregate it into useful visualizations.</p>
+		<h2>Data Ingest</h2>
+		<p>Before we dive into how data points are queried, we first need to understand how data is stored in Lightstep.
+			We continuously collect customer data points that have a wide variety of attributes, such as customer_id, or
+			hostname. For both metric and span data points, we partition the points based on these attributes, as well
+			as the name of the span or metric itself. &nbsp;Points with the same exact set of attributes are stored
+			together in chronological order based on the timestamp. This is also known as a timeseries. </p>
+		<img alt="Four timeseries being ingested and stored in Lightstep" src="images/image6.gif">
+		<h2>Query Pipeline</h2>
+		<p>Every query at Lightstep can be broken down into multiple stages. The most common stages found in almost
+			every query are:</p>
+		<ul>
+			<li><span>Fetch</span></li>
+			<li><span>Filter</span></li>
+			<li><span>Align</span></li>
+			<li><span>Group by</span></li>
+		</ul>
+		<p>These stages are applied to the data in the order defined by the user, which is usually the same order as
+			they are listed above. Each of these stages uses the output of the previous stage and produces a collection
+			of timeseries. Let&rsquo;s look at each of these stages in more detail.</p>
+		<h2>Query Pipeline: Fetch and Filter</h2>
+		<p>Now that we have data stored as timeseries, we can query that data. The fist stage of every query pipeline is
+			called the fetch operation. Fetch uses a predicate to determine what subset of timeseries need to be loaded
+			from the data storage layer. In Lightstep&rsquo;s Unified Query Language &ndash; a text-based query language
+			for metrics and spans also known as UQL &ndash; this is spelled `metric &lt;metric_name&gt;` for metrics and
+			`spans count` or `spans latency` for span queries along with an (optional for metrics) `filter` operation.
+			In our visual query builder, the fetch and filter options correspond with the first section.</p>
+		<img class="larger" alt="Fetch and filter in the visual query builder for metrics" src="images/image8.png">
+		<img class="larger" alt="Fetch and filter in the visual query builder for spans" src="images/image3.png">
+		<p>TIP: For those readers who are familiar with the SQL language, the fetch and filter stages are quite similar
+			to SQL&rsquo;s FROM and WHERE</p>
+		<p>The fetch operation will grab all the timeseries that match the predicate. These points may not be temporally
+			aligned, so the next stage in every pipeline aligns the data.</p>
+		<h2>Query Pipeline: Align</h2>
+		<p>Raw timeseries data for queries can often contain thousands of individual data points. If we attempted to
+			plot this raw data on a chart, we&rsquo;d quickly run into a fundamental issue: there aren&rsquo;t enough
+			pixels to render each value! To avoid this issue, we pick a few hundred timestamps that we want data for and
+			align the raw data to match. We&rsquo;ll also combine points&nbsp;across multiple timeseries in the &ldquo;group
+			by&rdquo; stage. To do that, the points must first the same timestamp. And so, the align stage is required
+			for all telemetry queries at Lightstep.</p>
+		<p>For each output timestamp that has been chosen, we aggregate all the points from the original timeseries that
+			have a timestamp between the output timestamp and [output timestamp - input window]. The default &ldquo;input
+			window&rdquo; is just the distance between each output point, which results in each output point aggregating
+			a unique set of input points. By specifying an input window that is larger than the distance between output
+			points, the resultant data can be smoothed; the larger the input window the more smoothing occurs. </p>
+		<img alt="A large input window smoothing data as points are aligned" src="images/image2.gif">
+		<p>This type of aggregation is called temporal aggregation because we combine points across the time dimension.
+			Note that the points being combined during a temporal aggregation all come from the same timeseries and all
+			have different timestamps. The following aggregators are available to use for temporal aggregation:</p>
+		<p>TIP: Think of temporal aggregation as horizontal aggregation.</p>
+		<table>
+			<tr>
+				<td><p>Alignment aggregator</p></td>
+				<td><p>UQL spelling</p></td>
+				<td><p>Description</p></td>
+			</tr>
+			<tr>
+				<td><p>Latest</p></td>
+				<td><p>latest</p></td>
+				<td><p>Output the last point in the found in the window</p></td>
+			</tr>
+			<tr>
+				<td><p>Delta</p></td>
+				<td><p>delta</p></td>
+				<td><p>Output the change in the metric from the earliest point to the latest point.</p></td>
+			</tr>
+			<tr>
+				<td><p>Rate</p></td>
+				<td><p>rate</p></td>
+				<td><p>Output the rate that the metric is changing at (per second) </p></td>
+			</tr>
+			<tr>
+				<td><p>Sum</p></td>
+				<td><p>reduce sum</p></td>
+				<td><p>Output the mathematical sum of all points</p></td>
+			</tr>
+			<tr>
+				<td><p>Max</p></td>
+				<td><p>reduce max</p></td>
+				<td><p>Output the maximum point</p></td>
+			</tr>
+			<tr>
+				<td><p>Min</p></td>
+				<td><p>reduce min</p></td>
+				<td><p>Output the minimum point</p></td>
+			</tr>
+			<tr>
+				<td><p>Mean</p></td>
+				<td><p>reduce mean</p></td>
+				<td><p>Output the average of all points</p></td>
+			</tr>
+		</table>
+		<p>Continuing the visual from above here we show the fetch and align.</p>
+		<img alt="Align stage" src="images/image7.gif">
+		<h2>Query Pipeline: Group</h2>
+		<p>Now that we have aligned the timeseries data, we can combine it in a pipeline stage called &ldquo;group by.&rdquo;
+			When grouping, we only consider attributes with the keys defined by the user and ignore all others. The
+			&ldquo;group by&rdquo; stage combines all timeseries where the considered attributes&rsquo; key/values are
+			equal using a specified aggregator</p>
+		<p>For example, if we group by &ldquo;host&rdquo; and half of our fetched timeseries have a host value of
+			&ldquo;A&rdquo; and the other half have value &ldquo;B,&rdquo; we end up with two timeseries where these two
+			sets of values are aggregated.</p>
+		<p>This type of aggregation is called spatial aggregation because we combine points across the space of all the
+			timeseries in each group. Note that the points being combined during a spatial aggregation all have the same
+			exact timestamp and all come from a different timeseries. This is why the &ldquo;align&rdquo; stage is so
+			crucial; it ensures that the points during spatial aggregation all have the same timestamp. The following
+			aggregators are available to use for spatial aggregation:</p>
+		<p>TIP: Think of spatial aggregation as vertical aggregation.</p>
+		<table>
+			<tr>
+				<td><p>Group by Aggregator</p></td>
+				<td><p>UQL spelling</p></td>
+				<td><p>Description</p></td>
+			</tr>
+			<tr>
+				<td><p>Sum</span></p></td>
+				<td><p>group_by [...], sum</p></td>
+				<td><p>For scalar values, all points are added together. For distribution values the distributions are
+					combined. This is the only supported aggregator for distribution metrics and span latency
+					queries. </p></td>
+			</tr>
+			<tr>
+				<td><p>Mean</p></td>
+				<td><p>group_by [...], mean</p></td>
+				<td><p>The mathematical mean of all points</p></td>
+			</tr>
+			<tr>
+				<td><p>Max</p></td>
+				<td><p>group_by [...], max</p></td>
+				<td><p>The maximum value of combined points</p></td>
+			</tr>
+			<tr>
+				<td><p>Min</p></td>
+				<td><p>group_by [...], min</p></td>
+				<td><p>The minimum value of combined points</p></td>
+			</tr>
+			<tr>
+				<td><p>Count</p></td>
+				<td><p>group_by [...], count</p></td>
+				<td><p>Ignores the values of points and just returns the number of points combined.</p></td>
+			</tr>
+		</table>
+		<p>Let&rsquo;s look at &nbsp;the &ldquo;group by&quot; stage in action. While this only shows &nbsp;two
+			underlying timeseries in each group, in practice we can combine hundreds of timeseries in each group.</p>
+		<img alt="Group by stage" src="images/image10.gif">
+		<h2>Tying it all together</h2>
+		<p>Now that we&#39;ve seen how each stage of the query pipeline works, let&#39;s put it together. Over the
+			course of this post we&rsquo;ve been building this query.</p>
+		<img class="larger" alt="Query in visual builder" src="images/image11.png">
+		<p>Here is the same query represented in UQL</p>
+		<img class="larger" alt="" src="images/image1.png">
+		<p>And here is the full animation of that query as it is processed through each pipeline stage.</p>
+		<img alt="All stages combined" src="images/image4.gif">
+		<p>Hopefully, you have a better understanding of how our query pipeline works for these basic queries. It works
+			almost identically for metrics and spans, which means that once you know how to query one, it&rsquo;s super
+			easy to query the other!</p>
+	</div>
+</body>
+</html>

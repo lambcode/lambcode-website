@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+        html, body {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            background-color: #ddd;
+            color: #111;
+            height: 100%;
+        }
+
+        body {
+            display: grid;
+            grid-template-columns: 2fr [content] 6fr 2fr;
+        }
+
+        .pane {
+            padding: 0 3rem 0 3rem;
+            grid-column-start: content;
+            grid-column-end: content;
+            background-color: #eee;
+            height: 100%;
+        }
+
+        h2, h1 {
+            color: #48c;
+        }
+
+        img {
+            max-width: 500px;
+        }
+
+        img.larger {
+            max-width: 800px;
+        }
+
+        table {
+            width: 80%;
+        }
+
+        table, td {
+            border: 1px solid;
+            border-collapse: collapse;
+        }
+
+        td {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        @media only screen and (max-device-width: 768px) {
+            body {
+                display: grid;
+                grid-template-columns: [content] 1fr;
+            }
+        }
+	</style>
+	<style>
+		.doublewidelist {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 2rem;
+		}
+        .item {
+			flex: 1;
+			background-color: #fff;
+            display: flex;
+			flex-direction: column;
+			padding: 1rem 2rem 1rem 2rem;
+			box-sizing: border-box;
+			box-shadow: #dddddd 5px 5px 10px;
+        }
+        .item img {
+            flex: 1;
+			height: 150px;
+			object-fit: contain;
+        }
+		a {
+            color: #111;
+            text-decoration: none;
+		}
+        a span {
+			font-size: 16pt;
+        }
+	</style>
+</head>
+<body>
+	<div class="pane">
+		<h1>lambcode.net blog</h1>
+		<hr/>
+		<p>A space for things I find interesting.</p>
+		<div class="doublewidelist">
+			<a class="item" href="securing-my-apps-with-tailscale">
+				<span>Securing my apps with Tailscale</span>
+				<img alt="Securing apps with Tailscale" src="securing-my-apps-with-tailscale/images/Tailscale-Logo-Black.svg">
+			</a>
+			<a class="item"href="lightstep-queries">
+				<span>How queries at Lightstep work</span>
+				<img alt="How Queries work" src="lightstep-queries/images/image5.png">
+			</a>
+		</divc>
+	</div>
+</body>
+</html>
